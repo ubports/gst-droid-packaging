@@ -1,1 +1,2 @@
 remove-methods-not-upstreamed.patch
+0001-Don-t-update-submodule-init.patch

@@ -1,0 +1,31 @@
+From c900cdda0668b57b9c3a9914bd3c958521d0c87f Mon Sep 17 00:00:00 2001
+From: Bhushan Shah <bhush94@gmail.com>
+Date: Fri, 15 Dec 2017 15:19:35 +0530
+Subject: [PATCH] Don't update submodule init
+
+---
+ autogen.sh | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/autogen.sh b/autogen.sh
+index df0bbfd..e9fc986 100755
+--- a/autogen.sh
++++ b/autogen.sh
+@@ -17,14 +17,6 @@ DIE=0
+ package=gst-droid
+ srcfile=gst-droid.doap
+ 
+-# Make sure we have common
+-if test ! -f common/gst-autogen.sh;
+-then
+-  echo "+ Setting up common submodule"
+-  git submodule init
+-fi
+-git submodule update
+-
+ # source helper functions
+ if test ! -f common/gst-autogen.sh;
+ then
+-- 
+2.15.1
+

@@ -1,6 +1,6 @@
 Source: gst-droid
 Priority: optional
-Maintainer: root <root@unknown>
+Maintainer: Bhushan Shah <bhush94@gmail.com>
 Build-Depends: debhelper (>=9),
                droidmedia,
                libgstreamer-plugins-bad1.0-dev,

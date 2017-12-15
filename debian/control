@@ -5,7 +5,8 @@ Build-Depends: debhelper (>=9),
                droidmedia,
                libgstreamer-plugins-bad1.0-dev,
                libexif-dev,
-               libhybris-dev
+               libhybris-dev,
+               nemo-gstreamer1.0-interfaces-dev
 Standards-Version: 3.9.6
 Section: libs
 Homepage: https://github.com/sailfishos/gst-droid/

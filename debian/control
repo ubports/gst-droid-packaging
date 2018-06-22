@@ -1,17 +1,17 @@
 Source: gst-droid
 Priority: optional
 Maintainer: Bhushan Shah <bhush94@gmail.com>
-Build-Depends: debhelper (>=9),
+Build-Depends: debhelper (>= 11),
                droidmedia,
                libgstreamer-plugins-bad1.0-dev,
                libexif-dev,
                libhybris-dev,
                nemo-gstreamer1.0-interfaces-dev
-Standards-Version: 3.9.6
+Standards-Version: 4.1.4
 Section: libs
 Homepage: https://github.com/sailfishos/gst-droid/
-#Vcs-Git: git://anonscm.debian.org/collab-maint/gst-droid.git
-#Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/gst-droid.git
+Vcs-Git: https://gitlab.com/debian-pm/gst-droid.git
+Vcs-Browser: https://gitlab.com/debian-pm/gst-droid
 
 Package: gstreamer1.0-droid-dev
 Section: libdevel

@@ -1,3 +1,9 @@
+gst-droid (0.20180503.0-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Jonah Brüchert <jbb@kaidan.im>  Fri, 22 Jun 2018 22:12:14 +0000
+
 gst-droid (0.20171129.0-1) unstable; urgency=medium
 
   * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>

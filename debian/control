@@ -3,8 +3,8 @@ Priority: optional
 Maintainer: Bhushan Shah <bhush94@gmail.com>
 Build-Depends: debhelper (>= 11),
                droidmedia,
-               libgstreamer-plugins-bad1.0-dev,
                libexif-dev,
+               libgstreamer-plugins-bad1.0-dev,
                libhybris-dev,
                nemo-gstreamer1.0-interfaces-dev
 Standards-Version: 4.1.4
@@ -22,7 +22,7 @@ Description: GStreamer droid plug-in.
 
 Package: gstreamer1.0-droid
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: GStreamer droid plug-in.
  GStreamer droid plug-in contains elements using the Android HAL.
 

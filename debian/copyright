@@ -11,27 +11,8 @@ Files: common/*
 Copyright: 2006, Daniel Berrange
 License: GPL-2+
 
-Files: common/m4/*
-Copyright: 2007, Guido U. Draheim <guidod@gmx.de>
-License: GPL-2+
-
-Files: common/m4/glib-gettext.m4
-Copyright: 2001-2004, Red Hat, Inc.
-  1995-2002, Free Software Foundation, Inc.
-License: GPL
- Please fill license GPL from header of common/m4/glib-gettext.m4
-
-Files: common/m4/introspection.m4
-Copyright: 2009, Johan Dahlin
-License: UNKNOWN
- Please fill license UNKNOWN from header of common/m4/introspection.m4
-
-Files: common/m4/pkg.m4
-Copyright: 2004, Scott James Remnant <scott@netsplit.com>.
-License: GPL-2+
-
 Files: debian/*
-Copyright: 2017, root <root@unknown>
+Copyright: 2017, Bhushan Shah <bshah@kde.org>
 License: GPL-2+
  This package is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by

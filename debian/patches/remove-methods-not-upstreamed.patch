@@ -4,11 +4,9 @@ Date: Fri, 15 Dec 2017 08:22:43 +0000
 Subject: [PATCH] Remove methods which are not upstreamed
 
 
-diff --git a/gst/droidcamsrc/gstdroidcamsrcphotography.c b/gst/droidcamsrc/gstdroidcamsrcphotography.c
-index 366972c..fd8a046 100644
 --- a/gst/droidcamsrc/gstdroidcamsrcphotography.c
 +++ b/gst/droidcamsrc/gstdroidcamsrcphotography.c
-@@ -252,24 +252,24 @@ gst_droidcamsrc_photography_register (G_GNUC_UNUSED gpointer g_iface,
+@@ -369,24 +369,24 @@ gst_droidcamsrc_photography_register (G_
    iface->get_config = gst_droidcamsrc_photography_get_config;
    iface->get_noise_reduction = gst_droidcamsrc_photography_get_noise_reduction;
    iface->set_noise_reduction = gst_droidcamsrc_photography_set_noise_reduction;

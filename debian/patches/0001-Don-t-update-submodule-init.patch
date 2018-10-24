@@ -7,8 +7,6 @@ Subject: [PATCH] Don't update submodule init
  autogen.sh | 8 --------
  1 file changed, 8 deletions(-)
 
-diff --git a/autogen.sh b/autogen.sh
-index df0bbfd..e9fc986 100755
 --- a/autogen.sh
 +++ b/autogen.sh
 @@ -17,14 +17,6 @@ DIE=0
@@ -26,6 +24,3 @@ index df0bbfd..e9fc986 100755
  # source helper functions
  if test ! -f common/gst-autogen.sh;
  then
--- 
-2.15.1
-

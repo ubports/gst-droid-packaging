@@ -7,7 +7,7 @@ Build-Depends: debhelper (>= 11),
                libgstreamer-plugins-bad1.0-dev,
                libhybris-dev,
                nemo-gstreamer1.0-interfaces-dev
-Standards-Version: 4.1.4
+Standards-Version: 4.2.1
 Section: libs
 Homepage: https://github.com/sailfishos/gst-droid/
 Vcs-Git: https://gitlab.com/debian-pm/gst-droid.git

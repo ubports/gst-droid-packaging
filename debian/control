@@ -10,8 +10,8 @@ Build-Depends: debhelper (>= 11),
 Standards-Version: 4.2.1
 Section: libs
 Homepage: https://github.com/sailfishos/gst-droid/
-Vcs-Git: https://gitlab.com/debian-pm/gst-droid.git
-Vcs-Browser: https://gitlab.com/debian-pm/gst-droid
+Vcs-Git: https://gitlab.com/debian-pm/halium/gst-droid.git
+Vcs-Browser: https://gitlab.com/debian-pm/halium/gst-droid
 
 Package: gstreamer1.0-droid-dev
 Section: libdevel

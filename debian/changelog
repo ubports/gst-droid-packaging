@@ -1,8 +1,8 @@
-gst-droid (0.20190506.0-1) UNRELEASED; urgency=medium
+gst-droid (0.20190506.0-1) unstable; urgency=medium
 
   * New upstream release
 
- -- Jonah Brüchert <jbb@kaidan.im>  Fri, 19 Jul 2019 19:30:00 +0200
+ -- Jonah Brüchert <jbb@kaidan.im>  Fri, 19 Jul 2019 21:07:48 +0200
 
 gst-droid (0.20181128.0-1) unstable; urgency=medium
 

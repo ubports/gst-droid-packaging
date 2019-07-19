@@ -24,6 +24,6 @@ gst-droid (0.20180503.0-1) unstable; urgency=medium
 
 gst-droid (0.20171129.0-1) unstable; urgency=medium
 
-  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+  * Initial release
 
  -- Bhushan Shah <bshah@kde.org>  Fri, 15 Dec 2017 07:17:56 +0000

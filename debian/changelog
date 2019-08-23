@@ -1,3 +1,9 @@
+gst-droid (0.20190805.0-1~ubports16.04.1) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Ratchanan Srirattanamet <peathot@hotmail.com>  Fri, 23 Aug 2019 15:06:00 +0700
+
 gst-droid (0.20190805.0-1) unstable; urgency=medium
 
   * New upstream release

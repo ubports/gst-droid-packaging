@@ -1,3 +1,4 @@
 0001-Don-t-update-submodule-init.patch
 0002-Remove-scene-modes-not-upstreamed.patch
 0003-Remove-methods-not-upstreamed.patch
+0101-fix-pkg-config-file-for-correct-android-header.patch

@@ -1,0 +1,23 @@
+Description: Fix pkg-config file for correct android-headers
+ Ubuntu has its Android headers seperated by Android version. This patch
+ update the dependencies in pkg-config file to point to the versioned
+ android-headers package used by libhybris, which is android-headers-24.
+Author: Ratchanan Srirattanamet <peathot@hotmail.com
+Origin: other
+Forwarded: not-needed
+Last-Update: 2019-08-24
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+Index: gst-droid/gstreamer-droid-1.0.pc.in
+===================================================================
+--- gst-droid.orig/gstreamer-droid-1.0.pc.in
++++ gst-droid/gstreamer-droid-1.0.pc.in
+@@ -5,7 +5,7 @@ includedir=@includedir@/gstreamer-1.0
+ 
+ Name: GstDroid library
+ Description: GstDroid library
+-Requires: gstreamer-1.0 gstreamer-base-1.0 android-headers
++Requires: gstreamer-1.0 gstreamer-base-1.0 android-headers-24
+ Version: @VERSION@
+ Libs: -L${libdir} -lgstdroid-1.0
+ Cflags: -I${includedir}

@@ -1,8 +1,13 @@
-gst-droid (0.20190805.0-1~ubports16.04.1) UNRELEASED; urgency=medium
+gst-droid (0.20190805.0-1~ubports16.04.1) xenial; urgency=medium
 
-  * 
+  * Import to UBports
+  * Backport to xenial
+    - Reduce debhelper compatibility to 9
+    - Bring back dh_autoreconf build-dep because it's not automatically
+      included in debhelper 9.
+  * Fix pkg-config file for correct android-headers
 
- -- Ratchanan Srirattanamet <peathot@hotmail.com>  Fri, 23 Aug 2019 15:06:00 +0700
+ -- Ratchanan Srirattanamet <peathot@hotmail.com>  Sat, 24 Aug 2019 20:26:14 +0700
 
 gst-droid (0.20190805.0-1) unstable; urgency=medium
 

@@ -1,0 +1,509 @@
+Description: [droidcamsrc] implement camerabin2's preview-image interface
+ This patch implement camerabin2's preview-image interface interface,
+ which make the element post a preview-image bus message when
+ post-previews property is enabled.
+ .
+ As Android doesn't seem to have the concept of preview-image (there are
+ raw & postview callbacks but they seem not to be called), I replicate
+ what Qt does with it's native Android plugin, which is storing the
+ latest viewfinder frame and using that as the preview. This require
+ changing how the preview callback flags is calculated as otherwise
+ preview callback won't be called. The last preview buffer is kept
+ within the structure of dev but use the seperated lock and condition
+ variable so that I don't need to think about locking in other places
+ (this may change in the future).
+ .
+ Camerabin2's preview-image interface also require that the element has
+ the preview-caps property and must send the preview-image according to
+ this caps. To fulfill that, a camerabinpipeline is constructed inside
+ the gstdroidcamsrc element. This pipeline will take care of all
+ conversion requied to make the preview image comply to the provided
+ caps and will also actually posting it to the bus.
+ .
+ When the image capture is requested, the post-preview property is
+ copied to image capturing structure so that the change after the
+ capture won't affect this capture. When the shutter callback is
+ called and if the preview image is requested, the kept viewfinder
+ buffer is sent to the preview pipeline for processing & posting.
+ .
+ This is required because Qt's camerabin plugin expects the
+ preview-image message for its imageExposed and imageCaptured signal
+ and some application expect imageCaptured to be fired.
+Author: Ratchanan Srirattanamet <peathot@hotmail.com>
+Forwarded: https://github.com/sailfishos/gst-droid/pull/36
+Last-Update: 2019-08-29
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
+===================================================================
+--- gst-droid.orig/gst/droidcamsrc/gstdroidcamsrcdev.c
++++ gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
+@@ -50,6 +50,7 @@ struct _GstDroidCamSrcImageCaptureState
+ {
+   gboolean image_preview_sent;
+   gboolean image_start_sent;
++  gboolean preview_image_requested;
+ };
+ 
+ struct _GstDroidCamSrcVideoCaptureState
+@@ -98,6 +99,34 @@ gst_droidcamsrc_dev_shutter_callback (vo
+     dev->img->image_start_sent = TRUE;
+   }
+ 
++  if (dev->img->preview_image_requested) {
++    gsize width, height;
++
++    GST_OBJECT_LOCK (src);
++    width = src->width;
++    height = src->height;
++    GST_OBJECT_UNLOCK (src);
++
++    GstVideoInfo video_info;
++    gst_video_info_set_format (&video_info, dev->viewfinder_format, width, height);
++    GstCaps *caps = gst_video_info_to_caps (&video_info);
++
++    /*
++     * Because we've ensured that dev->last_preview_buffer exists before we
++     * start and we never remove it, we can be sure that it should exists here
++     * too.
++     * TODO: what if we race with destruction?
++     */
++    g_mutex_lock (&dev->last_preview_buffer_lock);
++    GstSample *sample = gst_sample_new (dev->last_preview_buffer, caps,
++        NULL, NULL);
++    g_mutex_unlock (&dev->last_preview_buffer_lock);
++
++    gst_droidcamsrc_post_preview (src, sample);
++
++    dev->img->preview_image_requested = FALSE;
++  }
++
+   g_rec_mutex_unlock (dev->lock);
+ }
+ 
+@@ -280,16 +309,6 @@ gst_droidcamsrc_dev_preview_frame_callba
+ 
+   GST_DEBUG_OBJECT (src, "dev preview frame callback");
+ 
+-  /* We are accessing this without a lock because:
+-   * 1) We should not be called while preview is stopped and this is when we manipulate this flag
+-   * 2) We can get called when we start the preview and we will deadlock because the lock is already held
+-   */
+-  if (!dev->use_raw_data) {
+-    GST_WARNING_OBJECT (src,
+-        "preview frame callback called while not when we do not expect it");
+-    return;
+-  }
+-
+   buffer = gst_buffer_new_allocate (NULL, mem->size, NULL);
+   gst_buffer_fill (buffer, 0, mem->data, mem->size);
+ 
+@@ -303,10 +322,23 @@ gst_droidcamsrc_dev_preview_frame_callba
+ 
+   gst_droidcamsrc_dev_prepare_buffer (dev, buffer, rect, &video_info);
+ 
+-  g_mutex_lock (&pad->lock);
+-  g_queue_push_tail (pad->queue, buffer);
+-  g_cond_signal (&pad->cond);
+-  g_mutex_unlock (&pad->lock);
++  g_mutex_lock (&dev->last_preview_buffer_lock);
++  gst_buffer_replace (&dev->last_preview_buffer, buffer);
++  g_cond_signal (&dev->last_preview_buffer_cond);
++  g_mutex_unlock (&dev->last_preview_buffer_lock);
++
++  /* We are accessing this without a lock because:
++   * 1) We should not be called while preview is stopped and this is when we manipulate this flag
++   * 2) We can get called when we start the preview and we will deadlock because the lock is already held
++   */
++  if (dev->use_raw_data) {
++    g_mutex_lock (&pad->lock);
++    g_queue_push_tail (pad->queue, buffer);
++    g_cond_signal (&pad->cond);
++    g_mutex_unlock (&pad->lock);
++  } else {
++    gst_buffer_unref (buffer);
++  }
+ }
+ 
+ static void
+@@ -644,9 +676,14 @@ gst_droidcamsrc_dev_destroy (GstDroidCam
+ 
+   gst_droidcamsrc_recorder_destroy (dev->recorder);
+ 
++  gst_buffer_replace (&dev->last_preview_buffer, NULL);
++  g_mutex_clear (&dev->last_preview_buffer_lock);
++  g_cond_clear (&dev->last_preview_buffer_cond);
++
+   g_slice_free (GstDroidCamSrcImageCaptureState, dev->img);
+   g_slice_free (GstDroidCamSrcVideoCaptureState, dev->vid);
+   g_slice_free (GstDroidCamSrcDev, dev);
++
+   dev = NULL;
+ }
+ 
+@@ -699,6 +736,10 @@ gst_droidcamsrc_dev_init (GstDroidCamSrc
+ 
+   g_rec_mutex_unlock (dev->lock);
+ 
++  dev->last_preview_buffer = NULL;
++  g_mutex_init (&dev->last_preview_buffer_lock);
++  g_cond_init (&dev->last_preview_buffer_cond);
++
+   return TRUE;
+ }
+ 
+@@ -747,15 +788,7 @@ gst_droidcamsrc_dev_start (GstDroidCamSr
+     goto out;
+   }
+ 
+-  if (dev->use_raw_data) {
+-    GST_INFO_OBJECT (src, "Using raw data mode");
+-    droid_media_camera_set_preview_callback_flags (dev->cam,
+-        dev->c.CAMERA_FRAME_CALLBACK_FLAG_CAMERA);
+-  } else {
+-    GST_INFO_OBJECT (src, "Using native buffers mode");
+-    droid_media_camera_set_preview_callback_flags (dev->cam,
+-        dev->c.CAMERA_FRAME_CALLBACK_FLAG_NOOP);
+-  }
++  gst_droidcamsrc_dev_update_preview_callback_flag (dev);
+ 
+   if (!droid_media_camera_start_preview (dev->cam)) {
+     GST_ERROR_OBJECT (src, "error starting preview");
+@@ -844,17 +877,42 @@ out:
+ gboolean
+ gst_droidcamsrc_dev_capture_image (GstDroidCamSrcDev * dev)
+ {
++  GstDroidCamSrc *src = GST_DROIDCAMSRC (GST_PAD_PARENT (dev->imgsrc->pad));
++
+   gboolean ret = FALSE;
+   int msg_type = dev->c.CAMERA_MSG_SHUTTER | dev->c.CAMERA_MSG_RAW_IMAGE
+       | dev->c.CAMERA_MSG_POSTVIEW_FRAME | dev->c.CAMERA_MSG_COMPRESSED_IMAGE;
+ 
+   GST_DEBUG ("dev capture image");
+ 
++  if (src->post_preview) {
++    /*
++     * We must ensure that at least 1 preview buffer exists before proceed.
++     * After take_picture() is called, no preview callback will be called.
++     */
++
++    g_mutex_lock (&dev->last_preview_buffer_lock);
++
++    gint64 end_time = g_get_monotonic_time () + (1 * G_TIME_SPAN_SECOND);
++    while (!dev->last_preview_buffer) {
++      if (!g_cond_wait_until (&dev->last_preview_buffer_cond,
++              &dev->last_preview_buffer_lock, end_time))
++      {
++        GST_ERROR ("dev post_preview requested but no preview buffer available.");
++        return FALSE; // Because dev->lock has not been held yet.
++      }
++    }
++
++    g_mutex_unlock (&dev->last_preview_buffer_lock);
++  }
++
+   g_rec_mutex_lock (dev->lock);
+ 
+   dev->img->image_preview_sent = FALSE;
+   dev->img->image_start_sent = FALSE;
+ 
++  dev->img->preview_image_requested = src->post_preview;
++
+   if (!droid_media_camera_take_picture (dev->cam, msg_type)) {
+     GST_ERROR ("error capturing image");
+     goto out;
+@@ -1246,3 +1304,39 @@ gst_droidcamsrc_dev_queue_video_buffer_l
+   /* in case stop_video_recording() is waiting for us */
+   g_cond_signal (&dev->vid->cond);
+ }
++
++void
++gst_droidcamsrc_dev_update_preview_callback_flag (GstDroidCamSrcDev * dev)
++{
++  GstDroidCamSrc *src = GST_DROIDCAMSRC (GST_PAD_PARENT (dev->imgsrc->pad));
++
++  gboolean use_preview_callback;
++
++  g_rec_mutex_lock (dev->lock);
++
++  if (dev->use_raw_data) {
++    // This is inevitable
++    GST_INFO_OBJECT (src, "Preview use raw data mode");
++    use_preview_callback = TRUE;
++  } else if (src->mode == MODE_VIDEO) {
++    // Last preview buffer is no use in video mode.
++    GST_INFO_OBJECT (src, "Disable preview callback in video mode");
++    use_preview_callback = FALSE;
++  } else if (src->post_preview) {
++    GST_INFO_OBJECT (src, "post_preview enabled, preview buffer required");
++    use_preview_callback = TRUE;
++  } else {
++    GST_INFO_OBJECT (src, "Preview callback disabled");
++    use_preview_callback = FALSE;
++  }
++
++  g_rec_mutex_unlock (dev->lock);
++
++  if (use_preview_callback) {
++    droid_media_camera_set_preview_callback_flags (dev->cam,
++        dev->c.CAMERA_FRAME_CALLBACK_FLAG_CAMERA);
++  } else {
++    droid_media_camera_set_preview_callback_flags (dev->cam,
++        dev->c.CAMERA_FRAME_CALLBACK_FLAG_NOOP);
++  }
++}
+Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
+===================================================================
+--- gst-droid.orig/gst/droidcamsrc/gstdroidcamsrc.c
++++ gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
+@@ -115,6 +115,7 @@ static guint droidcamsrc_signals[LAST_SI
+ #define DEFAULT_SENSOR_ORIENTATION     0
+ #define DEFAULT_IMAGE_MODE             GST_DROIDCAMSRC_IMAGE_MODE_NORMAL
+ #define DEFAULT_TARGET_BITRATE         12000000
++#define DEFAULT_POST_PREVIEW           FALSE
+ 
+ static GstDroidCamSrcPad *
+ gst_droidcamsrc_create_pad (GstDroidCamSrc * src,
+@@ -204,6 +205,11 @@ gst_droidcamsrc_init (GstDroidCamSrc * s
+   src->video = gst_droidcamsrc_mode_new_video (src);
+   src->active_mode = NULL;
+ 
++  src->post_preview = FALSE;
++  src->preview_caps = NULL;
++  src->preview_pipeline =
++      gst_camerabin_create_preview_pipeline (GST_ELEMENT_CAST (src), NULL);
++
+   GST_OBJECT_FLAG_SET (src, GST_ELEMENT_FLAG_SOURCE);
+ }
+ 
+@@ -301,6 +307,15 @@ gst_droidcamsrc_get_property (GObject *
+       g_value_set_int (value, src->target_bitrate);
+       break;
+ 
++    case PROP_POST_PREVIEW:
++      g_value_set_boolean (value, src->post_preview);
++      break;
++
++    case PROP_PREVIEW_CAPS:
++      if (src->preview_caps)
++        gst_value_set_caps (value, src->preview_caps);
++      break;
++
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -371,6 +386,8 @@ gst_droidcamsrc_set_property (GObject *
+       }
+ 
+       g_rec_mutex_unlock (&src->dev_lock);
++
++      gst_droidcamsrc_dev_update_preview_callback_flag (src->dev);
+     }
+ 
+       break;
+@@ -401,6 +418,42 @@ gst_droidcamsrc_set_property (GObject *
+       src->target_bitrate = g_value_get_int (value);
+       break;
+ 
++    case PROP_POST_PREVIEW:
++      src->post_preview = g_value_get_boolean (value);
++
++      if (src->dev) {
++        gst_droidcamsrc_dev_update_preview_callback_flag (src->dev);
++      }
++
++      break;
++
++    case PROP_PREVIEW_CAPS:{
++      GstCaps *new_caps;
++
++      new_caps = (GstCaps *) gst_value_get_caps (value);
++      if (new_caps == NULL) {
++        new_caps = gst_caps_new_any ();
++      } else {
++        new_caps = gst_caps_ref (new_caps);
++      }
++
++      if (!gst_caps_is_equal (src->preview_caps, new_caps)) {
++        gst_caps_replace (&src->preview_caps, new_caps);
++
++        if (src->preview_pipeline) {
++          GST_DEBUG_OBJECT (src,
++              "Setting preview pipeline caps %" GST_PTR_FORMAT,
++              src->preview_caps);
++          gst_camerabin_preview_set_caps (src->preview_pipeline,
++              src->preview_caps);
++        }
++      } else {
++        GST_DEBUG_OBJECT (src, "New preview caps equal current preview caps");
++      }
++      gst_caps_unref (new_caps);
++    }
++      break;
++
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -431,6 +484,15 @@ gst_droidcamsrc_finalize (GObject * obje
+ 
+   g_rec_mutex_clear (&src->dev_lock);
+ 
++  // FIXME: these should be in dispose()
++  if (src->preview_pipeline) {
++    gst_camerabin_destroy_preview_pipeline (src->preview_pipeline);
++    src->preview_pipeline = NULL;
++  }
++
++  if (src->preview_caps)
++    gst_caps_replace (&src->preview_caps, NULL);
++
+   G_OBJECT_CLASS (parent_class)->finalize (object);
+ }
+ 
+@@ -545,6 +607,19 @@ gst_droidcamsrc_change_state (GstElement
+         break;
+       }
+ 
++      if (src->preview_pipeline == NULL) {
++        /* failed to create preview pipeline, fail state change */
++        ret = GST_STATE_CHANGE_FAILURE;
++      }
++
++      if (src->preview_caps) {
++        GST_DEBUG_OBJECT (src,
++            "Setting preview pipeline caps %" GST_PTR_FORMAT,
++            src->preview_caps);
++        gst_camerabin_preview_set_caps (src->preview_pipeline,
++            src->preview_caps);
++      }
++
+       src->dev =
+           gst_droidcamsrc_dev_new (src->vfsrc, src->imgsrc,
+           src->vidsrc, &src->dev_lock);
+@@ -607,6 +682,11 @@ gst_droidcamsrc_change_state (GstElement
+ 
+       /* Now add the needed orientation tag */
+       gst_droidcamsrc_add_vfsrc_orientation_tag (src);
++
++      /* without this the preview pipeline will not post buffer
++       * messages on the pipeline */
++      gst_element_set_state (src->preview_pipeline->pipeline,
++          GST_STATE_PLAYING);
+     }
+ 
+       break;
+@@ -670,11 +750,15 @@ gst_droidcamsrc_change_state (GstElement
+     case GST_STATE_CHANGE_PAUSED_TO_READY:
+       gst_droidcamsrc_dev_deinit (src->dev);
+       gst_droidcamsrc_dev_close (src->dev);
++
++      gst_element_set_state (src->preview_pipeline->pipeline, GST_STATE_READY);
+       break;
+ 
+     case GST_STATE_CHANGE_READY_TO_NULL:
+       gst_droidcamsrc_dev_destroy (src->dev);
+       src->dev = NULL;
++
++      gst_element_set_state (src->preview_pipeline->pipeline, GST_STATE_NULL);
+       break;
+ 
+     default:
+@@ -1081,6 +1165,17 @@ gst_droidcamsrc_class_init (GstDroidCamS
+           "Supported ISO speeds", G_VARIANT_TYPE_VARIANT, NULL,
+           G_PARAM_READABLE));
+ 
++  /* camerabin interface */
++  g_object_class_install_property (gobject_class, PROP_POST_PREVIEW,
++      g_param_spec_boolean ("post-previews", "Post Previews",
++          "If capture preview images should be posted to the bus",
++          DEFAULT_POST_PREVIEW, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
++
++  g_object_class_install_property (gobject_class, PROP_PREVIEW_CAPS,
++      g_param_spec_boxed ("preview-caps", "Preview caps",
++          "The caps of the preview image to be posted (NULL means ANY)",
++          GST_TYPE_CAPS, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
++
+   gst_droidcamsrc_photography_add_overrides (gobject_class);
+ 
+   /* Signals */
+@@ -2413,3 +2508,14 @@ gst_droidcamsrc_get_video_caps_locked (G
+ 
+   return caps;
+ }
++
++void
++gst_droidcamsrc_post_preview (GstDroidCamSrc * src, GstSample * sample)
++{
++  if (src->post_preview) {
++    gst_camerabin_preview_pipeline_post (src->preview_pipeline, sample);
++  } else {
++    GST_DEBUG_OBJECT (src, "Previews not enabled, not posting");
++    gst_sample_unref (sample);
++  }
++}
+Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcphotography.h
+===================================================================
+--- gst-droid.orig/gst/droidcamsrc/gstdroidcamsrcphotography.h
++++ gst-droid/gst/droidcamsrc/gstdroidcamsrcphotography.h
+@@ -76,7 +76,11 @@ typedef enum
+   PROP_MIN_EXPOSURE_TIME,
+   PROP_MAX_EXPOSURE_TIME,
+   PROP_NOISE_REDUCTION,
+-  PROP_EXPOSURE_MODE
++  PROP_EXPOSURE_MODE,
++
++  /* camerabin interface */
++  PROP_POST_PREVIEW,
++  PROP_PREVIEW_CAPS
+ } GstDroidCamSrcProperties;
+ 
+ void gst_droidcamsrc_photography_register (gpointer g_iface,  gpointer iface_data);
+Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.h
+===================================================================
+--- gst-droid.orig/gst/droidcamsrc/gstdroidcamsrc.h
++++ gst-droid/gst/droidcamsrc/gstdroidcamsrc.h
+@@ -122,6 +122,11 @@ struct _GstDroidCamSrc
+ 
+   gint32 target_bitrate;
+ 
++  /* camerabin interface */
++  gboolean post_preview;
++  GstCaps *preview_caps;
++  GstCameraBinPreviewPipelineData *preview_pipeline;
++
+   /* protected with OBJECT_LOCK */
+   gint width;
+   gint height;
+@@ -147,6 +152,8 @@ gboolean gst_droidcamsrc_apply_params (G
+ void gst_droidcamsrc_apply_mode_settings (GstDroidCamSrc * src, GstDroidCamSrcApplyType type);
+ void gst_droidcamsrc_update_max_zoom (GstDroidCamSrc * src);
+ 
++void gst_droidcamsrc_post_preview (GstDroidCamSrc * src, GstSample * sample);
++
+ G_END_DECLS
+ 
+ #endif /* __GST_DROIDCAMSRC_H__ */
+Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.h
+===================================================================
+--- gst-droid.orig/gst/droidcamsrc/gstdroidcamsrcdev.h
++++ gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.h
+@@ -56,6 +56,10 @@ struct _GstDroidCamSrcDev
+   DroidMediaCameraConstants c;
+   GstVideoFormat viewfinder_format;
+ 
++  GstBuffer *last_preview_buffer;
++  GMutex last_preview_buffer_lock;
++  GCond last_preview_buffer_cond;
++
+   gboolean use_recorder;
+   GstDroidCamSrcRecorder *recorder;
+ };
+@@ -95,6 +99,8 @@ gboolean gst_droidcamsrc_dev_is_running
+ 
+ void gst_droidcamsrc_dev_queue_video_buffer (GstDroidCamSrcDev * dev, GstBuffer * buffer);
+ 
++void gst_droidcamsrc_dev_update_preview_callback_flag (GstDroidCamSrcDev * dev);
++
+ G_END_DECLS
+ 
+ #endif /* __GST_DROIDCAMSRC_DEV_H__ */

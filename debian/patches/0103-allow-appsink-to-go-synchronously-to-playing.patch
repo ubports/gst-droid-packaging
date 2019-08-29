@@ -1,0 +1,29 @@
+Description: Allow appsink to go synchronously to GST_STATE_PLAYING.
+ This make preview processing go faster on first image capture and
+ allow preview-image message to be posted before the actual capture
+ itself.
+ .
+ This is temporary until the patch on camerabin side (see
+ https://gitlab.freedesktop.org/gstreamer/gst-plugins-bad/merge_requests/675)
+ gets merged and possibly backported.
+Author: Ratchanan Srirattanamet <peathot@hotmail.com>
+Forwarded: not-needed
+Last-Update: 2019-08-29 <YYYY-MM-DD, last update of the meta-information, optional>
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
+===================================================================
+--- gst-droid.orig/gst/droidcamsrc/gstdroidcamsrc.c
++++ gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
+@@ -210,6 +210,11 @@ gst_droidcamsrc_init (GstDroidCamSrc * s
+   src->preview_pipeline =
+       gst_camerabin_create_preview_pipeline (GST_ELEMENT_CAST (src), NULL);
+ 
++  /* Allow appsink to go synchronously to GST_STATE_PLAYING. This make preview
++   * processing go faster on first image capture.
++   */
++  g_object_set (src->preview_pipeline->appsink, "async", FALSE, NULL);
++
+   GST_OBJECT_FLAG_SET (src, GST_ELEMENT_FLAG_SOURCE);
+ }
+ 

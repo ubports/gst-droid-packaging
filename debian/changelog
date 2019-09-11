@@ -1,3 +1,9 @@
+gst-droid (0.20190805.0-1~ubports16.04.3) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Ratchanan Srirattanamet <peathot@hotmail.com>  Wed, 11 Sep 2019 23:31:44 +0700
+
 gst-droid (0.20190805.0-1~ubports16.04.2) xenial; urgency=medium
 
   * droidcamsrc: implement preview-image message.

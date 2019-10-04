@@ -1,7 +1,13 @@
-gst-droid (0.20190805.0-1~ubports16.04.4) UNRELEASED; urgency=medium
+gst-droid (0.20190805.0-1~ubports16.04.4) xenial; urgency=medium
 
+  * Update debian/patches/0102-implement-preview-image-message.patch
+    - Move variable initialisation to the correct place (in _new function)
+    - Run the file through gst-indent
+    - Clarifying comments based on new information
+  * Add a patch to fix deadlock when capture image with flash
+    - debian/patches/0104-droidcamsrc-call-take-picture-asynchronously.patch
 
- -- Ratchanan Srirattanamet <peathot@hotmail.com>  Fri, 04 Oct 2019 15:29:36 +0700
+ -- Ratchanan Srirattanamet <peathot@hotmail.com>  Fri, 04 Oct 2019 20:25:46 +0700
 
 gst-droid (0.20190805.0-1~ubports16.04.3) xenial; urgency=medium
 

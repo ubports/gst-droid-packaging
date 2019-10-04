@@ -71,7 +71,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
    return ret;
  }
  
-+void
++static void
 +_take_picture (gpointer user_data)
 +{
 +  GstDroidCamSrcDev *dev = (GstDroidCamSrcDev *) user_data;

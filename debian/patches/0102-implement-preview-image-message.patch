@@ -34,11 +34,9 @@ Forwarded: https://github.com/sailfishos/gst-droid/pull/36
 Last-Update: 2019-08-29
 ---
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
-Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
-===================================================================
---- gst-droid.orig/gst/droidcamsrc/gstdroidcamsrcdev.c
-+++ gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
-@@ -50,6 +50,7 @@ struct _GstDroidCamSrcImageCaptureState
+--- a/gst/droidcamsrc/gstdroidcamsrcdev.c
++++ b/gst/droidcamsrc/gstdroidcamsrcdev.c
+@@ -50,6 +50,7 @@
  {
    gboolean image_preview_sent;
    gboolean image_start_sent;
@@ -46,7 +44,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
  };
  
  struct _GstDroidCamSrcVideoCaptureState
-@@ -98,6 +99,34 @@ gst_droidcamsrc_dev_shutter_callback (vo
+@@ -98,6 +99,35 @@
      dev->img->image_start_sent = TRUE;
    }
  
@@ -59,7 +57,8 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
 +    GST_OBJECT_UNLOCK (src);
 +
 +    GstVideoInfo video_info;
-+    gst_video_info_set_format (&video_info, dev->viewfinder_format, width, height);
++    gst_video_info_set_format (&video_info, dev->viewfinder_format, width,
++        height);
 +    GstCaps *caps = gst_video_info_to_caps (&video_info);
 +
 +    /*
@@ -81,7 +80,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
    g_rec_mutex_unlock (dev->lock);
  }
  
-@@ -280,16 +309,6 @@ gst_droidcamsrc_dev_preview_frame_callba
+@@ -280,16 +310,6 @@
  
    GST_DEBUG_OBJECT (src, "dev preview frame callback");
  
@@ -98,7 +97,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
    buffer = gst_buffer_new_allocate (NULL, mem->size, NULL);
    gst_buffer_fill (buffer, 0, mem->data, mem->size);
  
-@@ -303,10 +322,23 @@ gst_droidcamsrc_dev_preview_frame_callba
+@@ -303,10 +323,23 @@
  
    gst_droidcamsrc_dev_prepare_buffer (dev, buffer, rect, &video_info);
  
@@ -126,7 +125,18 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
  }
  
  static void
-@@ -644,9 +676,14 @@ gst_droidcamsrc_dev_destroy (GstDroidCam
+@@ -535,6 +568,10 @@
+ 
+   dev->pool = gst_droid_buffer_pool_new ();
+ 
++  dev->last_preview_buffer = NULL;
++  g_mutex_init (&dev->last_preview_buffer_lock);
++  g_cond_init (&dev->last_preview_buffer_cond);
++
+   dev->use_recorder = FALSE;
+   dev->recorder = gst_droidcamsrc_recorder_create (vidsrc);
+ 
+@@ -644,9 +681,14 @@
  
    gst_droidcamsrc_recorder_destroy (dev->recorder);
  
@@ -141,18 +151,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
    dev = NULL;
  }
  
-@@ -699,6 +736,10 @@ gst_droidcamsrc_dev_init (GstDroidCamSrc
- 
-   g_rec_mutex_unlock (dev->lock);
- 
-+  dev->last_preview_buffer = NULL;
-+  g_mutex_init (&dev->last_preview_buffer_lock);
-+  g_cond_init (&dev->last_preview_buffer_cond);
-+
-   return TRUE;
- }
- 
-@@ -747,16 +788,6 @@ gst_droidcamsrc_dev_start (GstDroidCamSr
+@@ -747,16 +789,6 @@
      goto out;
    }
  
@@ -169,7 +168,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
    if (!droid_media_camera_start_preview (dev->cam)) {
      GST_ERROR_OBJECT (src, "error starting preview");
      goto out;
-@@ -764,6 +795,10 @@ gst_droidcamsrc_dev_start (GstDroidCamSr
+@@ -764,6 +796,10 @@
  
    dev->running = TRUE;
  
@@ -180,7 +179,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
    ret = TRUE;
  
  out:
-@@ -844,17 +879,42 @@ out:
+@@ -844,17 +880,42 @@
  gboolean
  gst_droidcamsrc_dev_capture_image (GstDroidCamSrcDev * dev)
  {
@@ -195,7 +194,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
 +  if (src->post_preview) {
 +    /*
 +     * We must ensure that at least 1 preview buffer exists before proceed.
-+     * After take_picture() is called, no preview callback will be called.
++     * After take_picture() is called, we might not get additional buffer.
 +     */
 +
 +    g_mutex_lock (&dev->last_preview_buffer_lock);
@@ -203,10 +202,10 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
 +    gint64 end_time = g_get_monotonic_time () + (1 * G_TIME_SPAN_SECOND);
 +    while (!dev->last_preview_buffer) {
 +      if (!g_cond_wait_until (&dev->last_preview_buffer_cond,
-+              &dev->last_preview_buffer_lock, end_time))
-+      {
-+        GST_ERROR ("dev post_preview requested but no preview buffer available.");
-+        return FALSE; // Because dev->lock has not been held yet.
++              &dev->last_preview_buffer_lock, end_time)) {
++        GST_ERROR
++            ("dev post_preview requested but no preview buffer available.");
++        return FALSE;           // Because dev->lock has not been held yet.
 +      }
 +    }
 +
@@ -223,7 +222,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
    if (!droid_media_camera_take_picture (dev->cam, msg_type)) {
      GST_ERROR ("error capturing image");
      goto out;
-@@ -1246,3 +1306,45 @@ gst_droidcamsrc_dev_queue_video_buffer_l
+@@ -1246,3 +1307,45 @@
    /* in case stop_video_recording() is waiting for us */
    g_cond_signal (&dev->vid->cond);
  }
@@ -269,11 +268,9 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.c
 +out:
 +  g_rec_mutex_unlock (dev->lock);
 +}
-Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
-===================================================================
---- gst-droid.orig/gst/droidcamsrc/gstdroidcamsrc.c
-+++ gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
-@@ -115,6 +115,7 @@ static guint droidcamsrc_signals[LAST_SI
+--- a/gst/droidcamsrc/gstdroidcamsrc.c
++++ b/gst/droidcamsrc/gstdroidcamsrc.c
+@@ -115,6 +115,7 @@
  #define DEFAULT_SENSOR_ORIENTATION     0
  #define DEFAULT_IMAGE_MODE             GST_DROIDCAMSRC_IMAGE_MODE_NORMAL
  #define DEFAULT_TARGET_BITRATE         12000000
@@ -281,7 +278,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
  
  static GstDroidCamSrcPad *
  gst_droidcamsrc_create_pad (GstDroidCamSrc * src,
-@@ -204,6 +205,11 @@ gst_droidcamsrc_init (GstDroidCamSrc * s
+@@ -204,6 +205,11 @@
    src->video = gst_droidcamsrc_mode_new_video (src);
    src->active_mode = NULL;
  
@@ -293,7 +290,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
    GST_OBJECT_FLAG_SET (src, GST_ELEMENT_FLAG_SOURCE);
  }
  
-@@ -301,6 +307,15 @@ gst_droidcamsrc_get_property (GObject *
+@@ -301,6 +307,15 @@
        g_value_set_int (value, src->target_bitrate);
        break;
  
@@ -309,7 +306,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
      default:
        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
        break;
-@@ -401,6 +416,42 @@ gst_droidcamsrc_set_property (GObject *
+@@ -401,6 +416,42 @@
        src->target_bitrate = g_value_get_int (value);
        break;
  
@@ -352,7 +349,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
      default:
        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
        break;
-@@ -431,6 +482,15 @@ gst_droidcamsrc_finalize (GObject * obje
+@@ -431,6 +482,15 @@
  
    g_rec_mutex_clear (&src->dev_lock);
  
@@ -368,7 +365,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
    G_OBJECT_CLASS (parent_class)->finalize (object);
  }
  
-@@ -545,6 +605,19 @@ gst_droidcamsrc_change_state (GstElement
+@@ -545,6 +605,19 @@
          break;
        }
  
@@ -388,7 +385,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
        src->dev =
            gst_droidcamsrc_dev_new (src->vfsrc, src->imgsrc,
            src->vidsrc, &src->dev_lock);
-@@ -607,6 +680,11 @@ gst_droidcamsrc_change_state (GstElement
+@@ -607,6 +680,11 @@
  
        /* Now add the needed orientation tag */
        gst_droidcamsrc_add_vfsrc_orientation_tag (src);
@@ -400,7 +397,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
      }
  
        break;
-@@ -670,11 +748,15 @@ gst_droidcamsrc_change_state (GstElement
+@@ -670,11 +748,15 @@
      case GST_STATE_CHANGE_PAUSED_TO_READY:
        gst_droidcamsrc_dev_deinit (src->dev);
        gst_droidcamsrc_dev_close (src->dev);
@@ -416,7 +413,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
        break;
  
      default:
-@@ -1081,6 +1163,17 @@ gst_droidcamsrc_class_init (GstDroidCamS
+@@ -1081,6 +1163,17 @@
            "Supported ISO speeds", G_VARIANT_TYPE_VARIANT, NULL,
            G_PARAM_READABLE));
  
@@ -434,7 +431,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
    gst_droidcamsrc_photography_add_overrides (gobject_class);
  
    /* Signals */
-@@ -2413,3 +2506,14 @@ gst_droidcamsrc_get_video_caps_locked (G
+@@ -2413,3 +2506,14 @@
  
    return caps;
  }
@@ -449,11 +446,9 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.c
 +    gst_sample_unref (sample);
 +  }
 +}
-Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcphotography.h
-===================================================================
---- gst-droid.orig/gst/droidcamsrc/gstdroidcamsrcphotography.h
-+++ gst-droid/gst/droidcamsrc/gstdroidcamsrcphotography.h
-@@ -76,7 +76,11 @@ typedef enum
+--- a/gst/droidcamsrc/gstdroidcamsrcphotography.h
++++ b/gst/droidcamsrc/gstdroidcamsrcphotography.h
+@@ -76,7 +76,11 @@
    PROP_MIN_EXPOSURE_TIME,
    PROP_MAX_EXPOSURE_TIME,
    PROP_NOISE_REDUCTION,
@@ -466,11 +461,9 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcphotography.h
  } GstDroidCamSrcProperties;
  
  void gst_droidcamsrc_photography_register (gpointer g_iface,  gpointer iface_data);
-Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.h
-===================================================================
---- gst-droid.orig/gst/droidcamsrc/gstdroidcamsrc.h
-+++ gst-droid/gst/droidcamsrc/gstdroidcamsrc.h
-@@ -122,6 +122,11 @@ struct _GstDroidCamSrc
+--- a/gst/droidcamsrc/gstdroidcamsrc.h
++++ b/gst/droidcamsrc/gstdroidcamsrc.h
+@@ -122,6 +122,11 @@
  
    gint32 target_bitrate;
  
@@ -482,7 +475,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.h
    /* protected with OBJECT_LOCK */
    gint width;
    gint height;
-@@ -147,6 +152,8 @@ gboolean gst_droidcamsrc_apply_params (G
+@@ -147,6 +152,8 @@
  void gst_droidcamsrc_apply_mode_settings (GstDroidCamSrc * src, GstDroidCamSrcApplyType type);
  void gst_droidcamsrc_update_max_zoom (GstDroidCamSrc * src);
  
@@ -491,11 +484,9 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrc.h
  G_END_DECLS
  
  #endif /* __GST_DROIDCAMSRC_H__ */
-Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.h
-===================================================================
---- gst-droid.orig/gst/droidcamsrc/gstdroidcamsrcdev.h
-+++ gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.h
-@@ -56,6 +56,10 @@ struct _GstDroidCamSrcDev
+--- a/gst/droidcamsrc/gstdroidcamsrcdev.h
++++ b/gst/droidcamsrc/gstdroidcamsrcdev.h
+@@ -56,6 +56,10 @@
    DroidMediaCameraConstants c;
    GstVideoFormat viewfinder_format;
  
@@ -506,7 +497,7 @@ Index: gst-droid/gst/droidcamsrc/gstdroidcamsrcdev.h
    gboolean use_recorder;
    GstDroidCamSrcRecorder *recorder;
  };
-@@ -95,6 +99,8 @@ gboolean gst_droidcamsrc_dev_is_running
+@@ -95,6 +99,8 @@
  
  void gst_droidcamsrc_dev_queue_video_buffer (GstDroidCamSrcDev * dev, GstBuffer * buffer);
  

@@ -1,7 +1,14 @@
-gst-droid (0.20190805.0-1~ubports16.04.5) UNRELEASED; urgency=medium
+gst-droid (0.20190805.0-1~ubports16.04.5) xenial; urgency=medium
 
+  * Update 0104-droidcamsrc-call-take-picture-asynchronously.patch
+    - Mark added _take_picture function as static because it's used only in
+      this funciton.
+  * Update debian/patches/0102-implement-preview-image-message.patch
+    - Make sure last preview buffer mutex is released if no preview buffer
+      is available within 1 second.
+    - Make preview posting works with video recording too.
 
- -- Ratchanan Srirattanamet <peathot@hotmail.com>  Fri, 04 Oct 2019 21:13:07 +0700
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Tue, 15 Oct 2019 21:20:42 +0700
 
 gst-droid (0.20190805.0-1~ubports16.04.4) xenial; urgency=medium
 

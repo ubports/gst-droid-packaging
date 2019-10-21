@@ -247,7 +247,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  out:
    g_rec_mutex_unlock (dev->lock);
  
-@@ -1246,3 +1311,73 @@
+@@ -1246,3 +1311,74 @@
    /* in case stop_video_recording() is waiting for us */
    g_cond_signal (&dev->vid->cond);
  }
@@ -268,13 +268,13 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 +
 +  if (dev->use_raw_data) {
 +    // This is inevitable
-+    GST_INFO_OBJECT (src, "Preview use raw data mode");
++    GST_INFO_OBJECT (src, "preview use raw data mode");
 +    use_preview_callback = TRUE;
 +  } else if (src->post_preview) {
 +    GST_INFO_OBJECT (src, "post_preview enabled, preview buffer required");
 +    use_preview_callback = TRUE;
 +  } else {
-+    GST_INFO_OBJECT (src, "Preview callback disabled");
++    GST_INFO_OBJECT (src, "preview callback disabled");
 +    use_preview_callback = FALSE;
 +  }
 +
@@ -295,29 +295,30 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 +{
 +  GstDroidCamSrc *src = GST_DROIDCAMSRC (GST_PAD_PARENT (dev->imgsrc->pad));
 +
-+  GST_DEBUG ("Post preview image from last viewfinder buffer");
-+
-+  gsize width, height;
-+  GST_OBJECT_LOCK (src);
-+  width = src->width;
-+  height = src->height;
-+  GST_OBJECT_UNLOCK (src);
-+
-+  GstVideoInfo video_info;
-+  gst_video_info_set_format (&video_info, dev->viewfinder_format, width,
-+      height);
-+  GstCaps *caps = gst_video_info_to_caps (&video_info);
++  GST_DEBUG ("post preview image from last viewfinder buffer");
 +
 +  /*
-+    * Because we've ensured that dev->last_preview_buffer exists before we
-+    * start and we never remove it, we can be sure that it should exists here
-+    * too.
-+    * TODO: what if we race with destruction?
-+    */
++   * Because we've ensured that dev->last_preview_buffer exists before we
++   * start and we never remove it, we can be sure that it should exists here
++   * too.
++   * TODO: what if we race with destruction?
++   */
 +  g_mutex_lock (&dev->last_preview_buffer_lock);
-+  GstSample *sample = gst_sample_new (dev->last_preview_buffer, caps,
-+      NULL, NULL);
++  GstBuffer *buffer = gst_buffer_ref (dev->last_preview_buffer);
 +  g_mutex_unlock (&dev->last_preview_buffer_lock);
++
++  GstVideoMeta *video_meta = gst_buffer_get_video_meta (buffer);
++  g_assert (video_meta != NULL);        // Because we added it in _prepare_buffer
++
++  GstVideoInfo video_info;
++  gst_video_info_set_format (&video_info, video_meta->format,
++      video_meta->width, video_meta->height);
++  GstCaps *caps = gst_video_info_to_caps (&video_info);
++
++  GstSample *sample = gst_sample_new (buffer, caps, NULL, NULL);
++
++  gst_buffer_unref (buffer);
++  gst_caps_unref (caps);
 +
 +  gst_droidcamsrc_post_preview (src, sample);
 +}

@@ -1,2 +1,4 @@
-https://debian-pm-tools.github.io/orig-tar-xzs/gst-droid_0.20190805.0.orig.tar.xz
-gst-droid_0.20190805.0.orig.tar.xz
+https://github.com/sailfishos/gst-droid/archive/0.20191129.0.tar.gz
+gst-droid_0.20191129.0.orig.tar.gz
+https://github.com/GStreamer/common/archive/bcb1518c08c889dd7eda06936fc26cad85fac755.tar.gz
+gst-droid_0.20191129.0.orig-common.tar.gz

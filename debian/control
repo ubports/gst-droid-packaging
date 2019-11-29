@@ -2,7 +2,7 @@ Source: gst-droid
 Priority: optional
 Maintainer: Bhushan Shah <bhush94@gmail.com>
 Build-Depends: debhelper (>= 11),
-               droidmedia,
+               droidmedia (>= 0.20191010.0),
                libexif-dev,
                libgstreamer-plugins-bad1.0-dev,
                libhybris-dev,

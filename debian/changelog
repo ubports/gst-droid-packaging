@@ -1,3 +1,12 @@
+gst-droid (0.20191129.0-1) UNRELEASED; urgency=medium
+
+  * New upstream version. Changes since last update includes:
+    - Support for MPEG2, H.265 and VP9.
+    - Adds detection for supported codec in the hardware.
+    - Propose native buffers to avoid having to copy GstBuffers.
+
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Sat, 30 Nov 2019 00:03:38 +0700
+
 gst-droid (0.20190805.0-1) unstable; urgency=medium
 
   * New upstream release

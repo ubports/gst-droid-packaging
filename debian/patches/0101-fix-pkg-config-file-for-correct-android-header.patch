@@ -2,7 +2,7 @@ Description: Fix pkg-config file for correct android-headers
  Ubuntu has its Android headers seperated by Android version. This patch
  update the dependencies in pkg-config file to point to the versioned
  android-headers package used by libhybris, which is android-headers-24.
-Author: Ratchanan Srirattanamet <peathot@hotmail.com
+Author: Ratchanan Srirattanamet <peathot@hotmail.com>
 Origin: other
 Forwarded: not-needed
 Last-Update: 2019-08-24

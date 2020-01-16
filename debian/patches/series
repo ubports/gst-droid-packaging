@@ -5,3 +5,4 @@
 0102-implement-preview-image-message.patch
 0103-allow-appsink-to-go-synchronously-to-playing.patch
 0104-droidcamsrc-call-take-picture-asynchronously.patch
+0105-droidcamsrc-make-deferred-property-set-return-true.patch

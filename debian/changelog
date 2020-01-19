@@ -1,7 +1,9 @@
-gst-droid (0.20190805.0-1~ubports16.04.7) UNRELEASED; urgency=medium
+gst-droid (0.20190805.0-1~ubports16.04.7) xenial; urgency=medium
 
+  * Fix setting focus point in the camera app
+    - d/p/0105-droidcamsrc-make-deferred-property-set-return-true.patch
 
- -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Thu, 16 Jan 2020 22:26:12 +0700
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Sun, 19 Jan 2020 23:16:24 +0700
 
 gst-droid (0.20190805.0-1~ubports16.04.6) xenial; urgency=medium
 

@@ -6,7 +6,7 @@ Subject: [PATCH] Remove methods which are not upstreamed
 
 --- a/gst/droidcamsrc/gstdroidcamsrcphotography.c
 +++ b/gst/droidcamsrc/gstdroidcamsrcphotography.c
-@@ -369,24 +369,24 @@ gst_droidcamsrc_photography_register (G_
+@@ -387,24 +387,24 @@
    iface->get_config = gst_droidcamsrc_photography_get_config;
    iface->get_noise_reduction = gst_droidcamsrc_photography_get_noise_reduction;
    iface->set_noise_reduction = gst_droidcamsrc_photography_set_noise_reduction;

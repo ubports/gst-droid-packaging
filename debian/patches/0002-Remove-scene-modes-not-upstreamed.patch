@@ -8,11 +8,9 @@ Subject: [PATCH] Remove scene modes not upstreamed
  tools/gstdroidcamsrcconf.c                  |  7 -------
  2 files changed, 2 insertions(+), 16 deletions(-)
 
-diff --git a/gst/droidcamsrc/gstdroidcamsrcphotography.c b/gst/droidcamsrc/gstdroidcamsrcphotography.c
-index 8c737b3..28d5263 100644
 --- a/gst/droidcamsrc/gstdroidcamsrcphotography.c
 +++ b/gst/droidcamsrc/gstdroidcamsrcphotography.c
-@@ -159,11 +159,7 @@ struct DataEntry SceneValues[] = {
+@@ -159,11 +159,7 @@
    {GST_PHOTOGRAPHY_SCENE_MODE_FIREWORKS, "fireworks"},
    {GST_PHOTOGRAPHY_SCENE_MODE_PARTY, "party"},
    {GST_PHOTOGRAPHY_SCENE_MODE_CANDLELIGHT, "candlelight"},
@@ -25,7 +23,7 @@ index 8c737b3..28d5263 100644
  };
  
  struct DataEntry ColourToneValues[] = {
-@@ -179,10 +175,7 @@ struct DataEntry ColourToneValues[] = {
+@@ -179,10 +175,7 @@
    {GST_PHOTOGRAPHY_COLOR_TONE_MODE_POSTERIZE, "posterize"},
    {GST_PHOTOGRAPHY_COLOR_TONE_MODE_WHITEBOARD, "whiteboard"},
    {GST_PHOTOGRAPHY_COLOR_TONE_MODE_BLACKBOARD, "blackboard"},
@@ -37,11 +35,9 @@ index 8c737b3..28d5263 100644
  };
  
  struct DataEntry FlickerValues[] = {
-diff --git a/tools/gstdroidcamsrcconf.c b/tools/gstdroidcamsrcconf.c
-index a6d0f1e..bc09e8e 100644
 --- a/tools/gstdroidcamsrcconf.c
 +++ b/tools/gstdroidcamsrcconf.c
-@@ -102,10 +102,6 @@ struct Node
+@@ -102,10 +102,6 @@
        ADD_ENTRY (GST_PHOTOGRAPHY_SCENE_MODE_PARTY, "party"),
        ADD_ENTRY (GST_PHOTOGRAPHY_SCENE_MODE_CANDLELIGHT, "candlelight"),
        ADD_ENTRY (GST_PHOTOGRAPHY_SCENE_MODE_BARCODE, "barcode"),
@@ -52,7 +48,7 @@ index a6d0f1e..bc09e8e 100644
        {NULL, -1}
      }},
    {"effect-values", "color-tone-mode", {
-@@ -125,9 +121,6 @@ struct Node
+@@ -125,9 +121,6 @@
        ADD_ENTRY (GST_PHOTOGRAPHY_COLOR_TONE_MODE_WHITEBOARD, "whiteboard"),
        ADD_ENTRY (GST_PHOTOGRAPHY_COLOR_TONE_MODE_BLACKBOARD, "blackboard"),
        ADD_ENTRY (GST_PHOTOGRAPHY_COLOR_TONE_MODE_AQUA, "aqua"),
@@ -62,6 +58,3 @@ index a6d0f1e..bc09e8e 100644
        {NULL, -1}
      }},
    // Qualcomm ISO values (e.g. ISO100) and Intel (iso-100)
--- 
-2.20.1
-

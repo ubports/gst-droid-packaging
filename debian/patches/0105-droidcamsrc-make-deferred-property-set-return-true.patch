@@ -8,8 +8,8 @@ Description: [droidcamsrc] make deferred property set return true
  the value is set successfully. Also, the logging message is updated to
  indicate the defferred nature of it.
 Author: Ratchanan Srirattanamet <ratchanan@ubports.com>
-Forwarded: <URL|no|not-needed, useless if you have a Bug field, optional>
-Last-Update: 2020-01-16
+Forwarded: https://github.com/sailfishos/gst-droid/pull/46
+Last-Update: 2020-01-31
 ---
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- a/gst/droidcamsrc/gstdroidcamsrcphotography.c

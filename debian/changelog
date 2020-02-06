@@ -1,3 +1,10 @@
+gst-droid (0.20190805.0-1~ubports16.04.7build1) xenial; urgency=medium
+
+  * No-change rebuild to pick-up the change in droidmedia.
+    - Makes gst-droid works on 64-bit system.
+
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Thu, 06 Feb 2020 16:47:26 +0700
+
 gst-droid (0.20190805.0-1~ubports16.04.7) xenial; urgency=medium
 
   * Fix setting focus point in the camera app

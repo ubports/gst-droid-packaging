@@ -17,7 +17,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
    gboolean image_preview_sent;
    gboolean image_start_sent;
    gboolean preview_image_requested;
-@@ -579,6 +580,8 @@
+@@ -557,6 +558,8 @@
  
    dev->viewfinder_format = GST_VIDEO_FORMAT_UNKNOWN;
  
@@ -26,7 +26,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
    return dev;
  }
  
-@@ -685,6 +688,9 @@
+@@ -665,6 +668,9 @@
    g_mutex_clear (&dev->last_preview_buffer_lock);
    g_cond_clear (&dev->last_preview_buffer_cond);
  
@@ -36,15 +36,16 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
    g_slice_free (GstDroidCamSrcImageCaptureState, dev->img);
    g_slice_free (GstDroidCamSrcVideoCaptureState, dev->vid);
    g_slice_free (GstDroidCamSrcDev, dev);
-@@ -696,6 +702,7 @@
+@@ -675,6 +681,8 @@
+ gboolean
  gst_droidcamsrc_dev_init (GstDroidCamSrcDev * dev)
  {
-   GstStructure *config;
 +  GError *err = NULL;
- 
++
    GST_DEBUG ("dev init");
  
-@@ -741,6 +748,13 @@
+   g_rec_mutex_lock (dev->lock);
+@@ -710,6 +718,13 @@
  
    g_rec_mutex_unlock (dev->lock);
  
@@ -58,7 +59,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
    return TRUE;
  }
  
-@@ -757,6 +771,8 @@
+@@ -726,6 +741,8 @@
    }
  
    g_rec_mutex_unlock (dev->lock);
@@ -67,7 +68,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  }
  
  gboolean
-@@ -877,14 +893,36 @@
+@@ -846,14 +863,36 @@
    return ret;
  }
  
@@ -106,7 +107,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  
    GST_DEBUG ("dev capture image");
  
-@@ -911,13 +949,27 @@
+@@ -881,13 +920,27 @@
  
    g_rec_mutex_lock (dev->lock);
  

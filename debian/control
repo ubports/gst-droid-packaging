@@ -3,11 +3,11 @@ Priority: optional
 Maintainer: Bhushan Shah <bhush94@gmail.com>
 Build-Depends: debhelper (>= 9),
                dh-autoreconf,
-               droidmedia,
+               droidmedia (>= 0.20200416.0),
                libexif-dev,
                libgstreamer-plugins-bad1.0-dev,
                libhybris-dev,
-               nemo-gstreamer1.0-interfaces-dev
+               nemo-gstreamer1.0-interfaces-dev (>= 0.20200421.0)
 Standards-Version: 4.2.1
 Section: libs
 Homepage: https://github.com/sailfishos/gst-droid/

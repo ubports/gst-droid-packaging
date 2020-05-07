@@ -9,7 +9,7 @@ Subject: [PATCH] Don't update submodule init
 
 --- a/autogen.sh
 +++ b/autogen.sh
-@@ -17,14 +17,6 @@ DIE=0
+@@ -17,14 +17,6 @@
  package=gst-droid
  srcfile=gst-droid.doap
  

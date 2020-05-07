@@ -1,3 +1,21 @@
+gst-droid (0.20200422.0-1) unstable; urgency=medium
+
+  * New upstream release. Changes since last update includes:
+    - codec: Ignore AMR and AMR-WB codec data.
+    - Use the buffer pool proposed by droideglsink in camera and video
+      decoder.
+    - Fix regression in droid buffer memory alignment.
+  * d/control: add a version requirement for droidmedia and nemo-gst-interfaces.
+    This is due to added API required by newer versions of gst-droid.
+
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Fri, 08 May 2020 02:58:31 +0700
+
+gst-droid (0.20191203.0-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Jonah Brüchert <jbb@kaidan.im>  Sun, 19 Jan 2020 18:36:08 +0100
+
 gst-droid (0.20190805.0-1~ubports16.04.8) UNRELEASED; urgency=medium
 
 

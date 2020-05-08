@@ -1,3 +1,9 @@
+gst-droid (0.20200422.0-1~ubports16.04.1) UNRELEASED; urgency=medium
+
+  * Merge version 0.20200422.0-1 from Debian-PM
+
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Fri, 08 May 2020 21:25:41 +0700
+
 gst-droid (0.20200422.0-1) unstable; urgency=medium
 
   * New upstream release. Changes since last update includes:
@@ -15,11 +21,6 @@ gst-droid (0.20191203.0-1) unstable; urgency=medium
   * New upstream release
 
  -- Jonah Brüchert <jbb@kaidan.im>  Sun, 19 Jan 2020 18:36:08 +0100
-
-gst-droid (0.20190805.0-1~ubports16.04.8) UNRELEASED; urgency=medium
-
-
- -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Thu, 06 Feb 2020 16:54:16 +0700
 
 gst-droid (0.20190805.0-1~ubports16.04.7build1) xenial; urgency=medium
 

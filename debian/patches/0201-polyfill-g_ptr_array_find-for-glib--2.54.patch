@@ -1,0 +1,51 @@
+Description: Polyfill g_ptr_array_find for GLib < 2.54
+ The recent version of gst-droid makes use of g_ptr_array_find which is
+ added in GLib 2.54. As Glib in xenial is 2.48, we have to polyfill it.
+Author: Ratchanan Srirattanamet <ratchanan@ubports.com>
+Forwarded: not-needed
+Last-Update: 2020-05-09
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/gst-libs/gst/droid/gstdroidbufferpool.c
++++ b/gst-libs/gst/droid/gstdroidbufferpool.c
+@@ -123,6 +123,40 @@
+   return GST_FLOW_OK;
+ }
+ 
++#if !GLIB_CHECK_VERSION(2,54,0)
++/* g_ptr_array_find is added in 2.54. */
++
++#define g_ptr_array_find gst_droid_buffer_ptr_array_find
++
++/*
++ * Copied with modification from GLib 2.64.2.
++ * GLib is licensed under LGPL 2.1 or later.
++ */
++
++static gboolean
++gst_droid_buffer_ptr_array_find (GPtrArray     *haystack,
++                                 gconstpointer  needle,
++                                 guint         *index_)
++{
++  guint i;
++
++  g_return_val_if_fail (haystack != NULL, FALSE);
++
++  for (i = 0; i < haystack->len; i++)
++    {
++      if (g_ptr_array_index (haystack, i) == needle)
++        {
++          if (index_ != NULL)
++            *index_ = i;
++          return TRUE;
++        }
++    }
++
++  return FALSE;
++}
++
++#endif // !GLIB_CHECK_VERSION(2,54,0)
++
+ static void
+ gst_droid_buffer_release_buffer (GstBufferPool * pool, GstBuffer * buffer)
+ {

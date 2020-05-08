@@ -6,3 +6,4 @@
 0103-allow-appsink-to-go-synchronously-to-playing.patch
 0104-droidcamsrc-call-take-picture-asynchronously.patch
 0105-droidcamsrc-make-deferred-property-set-return-true.patch
+0201-polyfill-g_ptr_array_find-for-glib--2.54.patch

@@ -25,7 +25,7 @@ Description: GStreamer droid plug-in.
 
 Package: gstreamer1.0-droid
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}, debconf
 Description: GStreamer droid plug-in.
  GStreamer droid plug-in contains elements using the Android HAL.
 

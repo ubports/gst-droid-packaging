@@ -1,8 +1,17 @@
-gst-droid (0.20200422.0-1~ubports16.04.1) UNRELEASED; urgency=medium
+gst-droid (0.20200422.0-1~ubports16.04.1) xenial; urgency=medium
 
   * Merge version 0.20200422.0-1 from Debian-PM
+  * Update source location for version 0.20200416.0
+  * Update 0101-fix-pkg-config-file-for-correct-android-header.patch
+    - Fix author's e-mail address.
+  * Refresh or update patches that don't apply
+    - 0102-implement-preview-image-message.patch
+    - 0104-droidcamsrc-call-take-picture-asynchronously.patch
+  * Polyfill g_ptr_array_find for GLib < 2.54
+    - 0201-polyfill-g_ptr_array_find-for-glib--2.54.patch
+  * Add debconf to remind people to upgrade Android images with droidmedia
 
- -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Fri, 08 May 2020 21:25:41 +0700
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Mon, 08 Jun 2020 21:47:55 +0700
 
 gst-droid (0.20200422.0-1) unstable; urgency=medium
 

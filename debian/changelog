@@ -1,3 +1,9 @@
+gst-droid (0.20200422.0-1~ubports16.04.2) xenial; urgency=medium
+
+  * Fix configure failure due to debconf prompt not being shown.
+
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Tue, 09 Jun 2020 16:28:47 +0700
+
 gst-droid (0.20200422.0-1~ubports16.04.1) xenial; urgency=medium
 
   * Merge version 0.20200422.0-1 from Debian-PM

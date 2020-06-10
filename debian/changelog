@@ -1,3 +1,8 @@
+gst-droid (0.20200422.0-1~ubports16.04.3) UNRELEASED; urgency=medium
+
+
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Wed, 10 Jun 2020 15:11:01 +0700
+
 gst-droid (0.20200422.0-1~ubports16.04.2) xenial; urgency=medium
 
   * Fix configure failure due to debconf prompt not being shown.

@@ -1,0 +1,50 @@
+Description: [droidcamsrc] don't re-activate mode on mode switch if it isn't active
+ If the mode is switched while the camera isn't running, there's no
+ point in activating it. Also, if we're deactivated in PLAYING->PAUSED
+ transition, we'll fail to activate because vfsrc pad is flusing.
+Author: Ratchanan Srirattanamet <ratchanan@ubports.com>
+Forwarded: https://github.com/sailfishos/gst-droid/pull/52
+Last-Update: 2020-06-10
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/gst/droidcamsrc/gstdroidcamsrc.c
++++ b/gst/droidcamsrc/gstdroidcamsrc.c
+@@ -357,6 +357,7 @@
+     case PROP_MODE:
+     {
+       GstCameraBinMode mode = g_value_get_enum (value);
++      gboolean was_active;
+ 
+       GST_INFO_OBJECT (src, "setting capture mode to: %d", mode);
+ 
+@@ -375,24 +376,25 @@
+       g_mutex_unlock (&src->capture_lock);
+ 
+       /* deactivate old mode */
+-      if (src->active_mode) {
++      was_active = (src->active_mode != NULL);
++      if (was_active) {
+         gst_droidcamsrc_mode_deactivate (src->active_mode);
+         src->active_mode = NULL;
+       }
+ 
+       src->mode = mode;
+ 
+-      g_rec_mutex_lock (&src->dev_lock);
++      if (was_active) {
++        g_rec_mutex_lock (&src->dev_lock);
+ 
+-      if (src->dev && src->dev->params) {
+         /* activate mode. */
+         gst_droidcamsrc_select_and_activate_mode (src);
+ 
+         /* set mode settings */
+         gst_droidcamsrc_apply_mode_settings (src, SET_AND_APPLY);
+-      }
+ 
+-      g_rec_mutex_unlock (&src->dev_lock);
++        g_rec_mutex_unlock (&src->dev_lock);
++      }
+     }
+ 
+       break;

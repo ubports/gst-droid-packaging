@@ -1,0 +1,66 @@
+Description: [droidcamsrc] make sensor orientation readable before READY
+ This, too, matches the behavior of gstahc, a camerabin-compatible
+ element for Android Camera API. _get_hw() is made to be idempotent, and
+ the property getting code is made to call this function before giving
+ the answer.
+ .
+ With this patch, QtMultimedia no longers have to set element's state
+ before reading orientations. However, with the previous patch, it might
+ still does so, at a cost of a bit slower enumeration.
+Author: ratchanan@ubports.com <ratchanan@ubports.com>
+Forwarded: no
+Last-Update: 2020-06-10
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/gst/droidcamsrc/gstdroidcamsrc.c
++++ b/gst/droidcamsrc/gstdroidcamsrc.c
+@@ -94,6 +94,7 @@
+     const gchar * resolution);
+ static gboolean gst_droidcamsrc_is_zsl_and_hdr_supported (GstDroidCamSrc * src);
+ static GstCaps *gst_droidcamsrc_get_video_caps_locked (GstDroidCamSrc * src);
++static gboolean gst_droidcamsrc_get_hw (GstDroidCamSrc * src);
+ 
+ enum
+ {
+@@ -169,6 +170,7 @@
+   src->quirks = gst_droidcamsrc_quirks_new ();
+   g_rec_mutex_init (&src->dev_lock);
+   src->dev = NULL;
++  src->info[0].num = src->info[1].num = -1;
+   src->camera_device = DEFAULT_CAMERA_DEVICE;
+   src->mode = DEFAULT_MODE;
+   src->captures = 0;
+@@ -280,7 +282,11 @@
+ 
+     case PROP_SENSOR_MOUNT_ANGLE:
+     case PROP_SENSOR_ORIENTATION:
+-      g_value_set_int (value, src->info[src->camera_device].orientation * 90);
++      if (!gst_droidcamsrc_get_hw (src)) {
++        g_value_set_int (value, 0);
++      } else {
++        g_value_set_int (value, src->info[src->camera_device].orientation * 90);
++      }
+       break;
+ 
+     case PROP_IMAGE_MODE:
+@@ -541,6 +550,11 @@
+ 
+   GST_DEBUG_OBJECT (src, "get hw");
+ 
++  if (src->info[0].num != -1 || src->info[1].num != -1) {
++    GST_DEBUG_OBJECT (src, "already have info");
++    return TRUE;
++  }
++
+   num = droid_media_camera_get_number_of_cameras ();
+   GST_INFO_OBJECT (src, "Found %d cameras", num);
+ 
+@@ -553,8 +567,6 @@
+     GST_WARNING_OBJECT (src, "cannot support %d cameras", num);
+   }
+ 
+-  src->info[0].num = src->info[1].num = -1;
+-
+   back_found =
+       gst_droidcamsrc_fill_info (src, &src->info[0],
+       DROID_MEDIA_CAMERA_FACING_BACK);

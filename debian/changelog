@@ -1,3 +1,10 @@
+gst-droid (0.20200605.0-1) unstable; urgency=medium
+
+  * New upstream release.
+    - [camera] Fix wrong byte-order on ISO value in EXIF.
+
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Wed, 15 Jul 2020 20:38:37 +0700
+
 gst-droid (0.20200422.0-1~ubports16.04.3) UNRELEASED; urgency=medium
 
 

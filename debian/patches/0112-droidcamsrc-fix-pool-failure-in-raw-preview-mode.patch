@@ -1,0 +1,88 @@
+Description: [droidcamsrc] fix pool failure in raw preview mode
+ Commit b0a25efff149 ("[gst-droid] Use the buffer pool proposed by
+ droideglsink in camera and video decoder.") make it possible that
+ dev->pool might be NULL. However, some code isn't updated for that,
+ causing failure when vfsrc is using raw video.
+ .
+ This patch adds appropriate checks and/or move code around to make
+ sure that dev->pool will be accessed only if it's not NULL. This fixes
+ raw preview mode.
+Author: Ratchanan Srirattanamet <ratchanan@ubports.com>
+Forwarded: https://github.com/sailfishos/gst-droid/pull/53
+Last-Update: 2020-07-15
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/gst/droidcamsrc/gstdroidcamsrcdev.c
++++ b/gst/droidcamsrc/gstdroidcamsrcdev.c
+@@ -762,9 +762,17 @@
+ 
+   GST_DEBUG_OBJECT (src, "dev start");
+ 
+-  if (!gst_buffer_pool_set_active (dev->pool, TRUE)) {
+-    GST_ERROR_OBJECT (src, "Failed to activate buffer pool");
+-    goto out;
++  if (!dev->use_raw_data) {
++    if (!dev->pool) {
++      GST_ERROR_OBJECT (src,
++          "No droid buffer pool provided in non-raw preview mode");
++      goto out;
++    }
++
++    if (!gst_buffer_pool_set_active (dev->pool, TRUE)) {
++      GST_ERROR_OBJECT (src, "Failed to activate buffer pool");
++      goto out;
++    }
+   }
+ 
+   if (apply_settings) {
+@@ -789,7 +797,7 @@
+   ret = TRUE;
+ 
+ out:
+-  if (ret != TRUE) {
++  if (ret != TRUE && dev->pool) {
+     gst_buffer_pool_set_active (dev->pool, FALSE);
+   }
+ 
+@@ -806,7 +814,9 @@
+ 
+   if (dev->running) {
+     GST_DEBUG ("stopping preview");
+-    gst_buffer_pool_set_active (dev->pool, FALSE);
++    if (dev->pool) {
++      gst_buffer_pool_set_active (dev->pool, FALSE);
++    }
+     droid_media_camera_stop_preview (dev->cam);
+     dev->running = FALSE;
+     GST_DEBUG ("stopped preview");
+@@ -981,8 +991,6 @@
+     g_mutex_unlock (&dev->last_preview_buffer_lock);
+   }
+ 
+-  gst_buffer_pool_set_flushing (dev->pool, TRUE);
+-
+   g_mutex_lock (&dev->vidsrc->lock);
+   dev->vidsrc->pushed_buffers = 0;
+   g_mutex_unlock (&dev->vidsrc->lock);
+@@ -994,6 +1002,8 @@
+     goto out;
+   }
+ 
++  gst_buffer_pool_set_flushing (dev->pool, TRUE);
++
+   dev->vid->running = TRUE;
+   dev->vid->eos_sent = FALSE;
+   dev->vid->video_frames = 0;
+@@ -1015,10 +1025,10 @@
+     gst_droidcamsrc_dev_post_preview (dev);
+ 
+ out:
+-  g_rec_mutex_unlock (dev->lock);
+-
+   gst_buffer_pool_set_flushing (dev->pool, FALSE);
+ 
++  g_rec_mutex_unlock (dev->lock);
++
+   return ret;
+ }
+ 

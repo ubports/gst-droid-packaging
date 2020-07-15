@@ -12,4 +12,6 @@
 0109-droidcamsrc-make-sensor-orientation-readable-before-READY.patch
 0110-droidcamsrc-notify-sensor-orientation-change-when-device-changed.patch
 0111-droidcamsrc-open-the-camera-at-ready-state.patch
+0112-droidcamsrc-fix-pool-failure-in-raw-preview-mode.patch
+0113-droidcamsrc-have-buffer-pool-for-raw-buffers.patch
 0201-polyfill-g_ptr_array_find-for-glib--2.54.patch

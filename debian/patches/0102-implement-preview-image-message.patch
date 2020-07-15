@@ -256,19 +256,18 @@ index 2504e91..438529a 100644
  
  #endif /* __GST_DROIDCAMSRC_H__ */
 diff --git a/gst/droidcamsrc/gstdroidcamsrcdev.c b/gst/droidcamsrc/gstdroidcamsrcdev.c
-index a53fb36..e7a88f7 100644
+index a53fb36..ba3e94f 100644
 --- a/gst/droidcamsrc/gstdroidcamsrcdev.c
 +++ b/gst/droidcamsrc/gstdroidcamsrcdev.c
-@@ -3,6 +3,8 @@
+@@ -3,6 +3,7 @@
   *
   * Copyright (C) 2014 Mohammed Sameer <msameer@foolab.org>
   * Copyright (C) 2015-2016 Jolla LTD.
-+ * Copyright (C) 2020 UBports foundation.
-+ * Author: Ratchanan Srirattanamet <ratchanan@ubports.com>
++ * Copyright (C) 2020 UBports Foundation.
   *
   * This library is free software; you can redistribute it and/or
   * modify it under the terms of the GNU Lesser General Public
-@@ -50,6 +52,7 @@ struct _GstDroidCamSrcImageCaptureState
+@@ -50,6 +51,7 @@ struct _GstDroidCamSrcImageCaptureState
  {
    gboolean image_preview_sent;
    gboolean image_start_sent;
@@ -276,7 +275,7 @@ index a53fb36..e7a88f7 100644
  };
  
  struct _GstDroidCamSrcVideoCaptureState
-@@ -81,6 +84,7 @@ static gboolean
+@@ -81,6 +83,7 @@ static gboolean
  gst_droidcamsrc_dev_start_video_recording_raw_locked (GstDroidCamSrcDev * dev);
  static void gst_droidcamsrc_dev_queue_video_buffer_locked (GstDroidCamSrcDev *
      dev, GstBuffer * buffer);
@@ -284,7 +283,7 @@ index a53fb36..e7a88f7 100644
  
  static void
  gst_droidcamsrc_dev_shutter_callback (void *user)
-@@ -98,6 +102,11 @@ gst_droidcamsrc_dev_shutter_callback (void *user)
+@@ -98,6 +101,11 @@ gst_droidcamsrc_dev_shutter_callback (void *user)
      dev->img->image_start_sent = TRUE;
    }
  
@@ -296,7 +295,7 @@ index a53fb36..e7a88f7 100644
    g_rec_mutex_unlock (dev->lock);
  }
  
-@@ -280,16 +289,6 @@ gst_droidcamsrc_dev_preview_frame_callback (void *user,
+@@ -280,16 +288,6 @@ gst_droidcamsrc_dev_preview_frame_callback (void *user,
  
    GST_DEBUG_OBJECT (src, "dev preview frame callback");
  
@@ -313,7 +312,7 @@ index a53fb36..e7a88f7 100644
    buffer = gst_buffer_new_allocate (NULL, mem->size, NULL);
    gst_buffer_fill (buffer, 0, mem->data, mem->size);
  
-@@ -303,10 +302,23 @@ gst_droidcamsrc_dev_preview_frame_callback (void *user,
+@@ -303,10 +301,23 @@ gst_droidcamsrc_dev_preview_frame_callback (void *user,
  
    gst_droidcamsrc_dev_prepare_buffer (dev, buffer, rect, &video_info);
  
@@ -326,7 +325,7 @@ index a53fb36..e7a88f7 100644
 +  g_cond_signal (&dev->last_preview_buffer_cond);
 +  g_mutex_unlock (&dev->last_preview_buffer_lock);
 +
-+  /* We are accessing this without a lock because:
++  /* We are accessing dev->use_raw_data without a lock because:
 +   * 1) We should not be called while preview is stopped and this is when we manipulate this flag
 +   * 2) We can get called when we start the preview and we will deadlock because the lock is already held
 +   */
@@ -341,7 +340,7 @@ index a53fb36..e7a88f7 100644
  }
  
  static void
-@@ -535,6 +547,11 @@ gst_droidcamsrc_dev_new (GstDroidCamSrcPad * vfsrc,
+@@ -535,6 +546,11 @@ gst_droidcamsrc_dev_new (GstDroidCamSrcPad * vfsrc,
    dev->lock = lock;
  
    dev->pool = NULL;
@@ -353,7 +352,7 @@ index a53fb36..e7a88f7 100644
    dev->use_recorder = FALSE;
    dev->recorder = gst_droidcamsrc_recorder_create (vidsrc);
  
-@@ -646,9 +663,14 @@ gst_droidcamsrc_dev_destroy (GstDroidCamSrcDev * dev)
+@@ -646,9 +662,14 @@ gst_droidcamsrc_dev_destroy (GstDroidCamSrcDev * dev)
  
    gst_droidcamsrc_recorder_destroy (dev->recorder);
  
@@ -368,7 +367,7 @@ index a53fb36..e7a88f7 100644
    dev = NULL;
  }
  
-@@ -738,16 +760,6 @@ gst_droidcamsrc_dev_start (GstDroidCamSrcDev * dev, gboolean apply_settings)
+@@ -738,16 +759,6 @@ gst_droidcamsrc_dev_start (GstDroidCamSrcDev * dev, gboolean apply_settings)
      goto out;
    }
  
@@ -385,7 +384,7 @@ index a53fb36..e7a88f7 100644
    if (!droid_media_camera_start_preview (dev->cam)) {
      GST_ERROR_OBJECT (src, "error starting preview");
      goto out;
-@@ -755,6 +767,9 @@ gst_droidcamsrc_dev_start (GstDroidCamSrcDev * dev, gboolean apply_settings)
+@@ -755,6 +766,9 @@ gst_droidcamsrc_dev_start (GstDroidCamSrcDev * dev, gboolean apply_settings)
  
    dev->running = TRUE;
  
@@ -395,7 +394,7 @@ index a53fb36..e7a88f7 100644
    ret = TRUE;
  
  out:
-@@ -835,17 +850,43 @@ out:
+@@ -835,17 +849,43 @@ out:
  gboolean
  gst_droidcamsrc_dev_capture_image (GstDroidCamSrcDev * dev)
  {
@@ -439,7 +438,7 @@ index a53fb36..e7a88f7 100644
    if (!droid_media_camera_take_picture (dev->cam, msg_type)) {
      GST_ERROR ("error capturing image");
      goto out;
-@@ -866,6 +907,28 @@ gst_droidcamsrc_dev_start_video_recording (GstDroidCamSrcDev * dev)
+@@ -866,6 +906,28 @@ gst_droidcamsrc_dev_start_video_recording (GstDroidCamSrcDev * dev)
  
    GST_DEBUG ("dev start video recording");
  
@@ -468,7 +467,7 @@ index a53fb36..e7a88f7 100644
    gst_buffer_pool_set_flushing (dev->pool, TRUE);
  
    g_mutex_lock (&dev->vidsrc->lock);
-@@ -895,6 +958,10 @@ gst_droidcamsrc_dev_start_video_recording (GstDroidCamSrcDev * dev)
+@@ -895,6 +957,10 @@ gst_droidcamsrc_dev_start_video_recording (GstDroidCamSrcDev * dev)
  
    ret = TRUE;
  
@@ -479,7 +478,7 @@ index a53fb36..e7a88f7 100644
  out:
    g_rec_mutex_unlock (dev->lock);
  
-@@ -1237,3 +1304,72 @@ gst_droidcamsrc_dev_queue_video_buffer_locked (GstDroidCamSrcDev * dev,
+@@ -1237,3 +1303,72 @@ gst_droidcamsrc_dev_queue_video_buffer_locked (GstDroidCamSrcDev * dev,
    /* in case stop_video_recording() is waiting for us */
    g_cond_signal (&dev->vid->cond);
  }
@@ -553,19 +552,18 @@ index a53fb36..e7a88f7 100644
 +  gst_droidcamsrc_post_preview (src, sample);
 +}
 diff --git a/gst/droidcamsrc/gstdroidcamsrcdev.h b/gst/droidcamsrc/gstdroidcamsrcdev.h
-index 62fff33..1ceb6c3 100644
+index 62fff33..b40bdaf 100644
 --- a/gst/droidcamsrc/gstdroidcamsrcdev.h
 +++ b/gst/droidcamsrc/gstdroidcamsrcdev.h
-@@ -3,6 +3,8 @@
+@@ -3,6 +3,7 @@
   *
   * Copyright (C) 2014 Mohammed Sameer <msameer@foolab.org>
   * Copyright (C) 2015-2016 Jolla LTD.
-+ * Copyright (C) 2020 UBports foundation.
-+ * Author: Ratchanan Srirattanamet <ratchanan@ubports.com>
++ * Copyright (C) 2020 UBports Foundation.
   *
   * This library is free software; you can redistribute it and/or
   * modify it under the terms of the GNU Lesser General Public
-@@ -56,6 +58,10 @@ struct _GstDroidCamSrcDev
+@@ -56,6 +57,10 @@ struct _GstDroidCamSrcDev
    DroidMediaCameraConstants c;
    GstVideoFormat viewfinder_format;
  
@@ -576,7 +574,7 @@ index 62fff33..1ceb6c3 100644
    gboolean use_recorder;
    GstDroidCamSrcRecorder *recorder;
  };
-@@ -95,6 +101,8 @@ gboolean gst_droidcamsrc_dev_is_running (GstDroidCamSrcDev * dev);
+@@ -95,6 +100,8 @@ gboolean gst_droidcamsrc_dev_is_running (GstDroidCamSrcDev * dev);
  
  void gst_droidcamsrc_dev_queue_video_buffer (GstDroidCamSrcDev * dev, GstBuffer * buffer);
  

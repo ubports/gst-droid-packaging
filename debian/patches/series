@@ -3,6 +3,7 @@
 0003-Remove-methods-not-upstreamed.patch
 0101-fix-pkg-config-file-for-correct-android-header.patch
 0102-implement-preview-image-message.patch
+0102_1-droidcamsrc-also-implement-preview-filter-property.patch
 0103-allow-appsink-to-go-synchronously-to-playing.patch
 0104-droidcamsrc-call-take-picture-asynchronously.patch
 0105-droidcamsrc-make-deferred-property-set-return-true.patch

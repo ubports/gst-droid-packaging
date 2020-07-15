@@ -1,0 +1,87 @@
+From 767232a7052d77683fddcd2e4f1e4bbbdf5c9553 Mon Sep 17 00:00:00 2001
+From: Ratchanan Srirattanamet <ratchanan@ubports.com>
+Date: Thu, 11 Jun 2020 01:42:16 +0700
+Subject: [PATCH] [droidcamsrc] also implement preview-filter property
+
+This property takes an element and place it inside the preview-image
+pipeline.
+---
+ gst/droidcamsrc/gstdroidcamsrc.c            | 21 +++++++++++++++++++++
+ gst/droidcamsrc/gstdroidcamsrc.h            |  1 +
+ gst/droidcamsrc/gstdroidcamsrcphotography.h |  3 ++-
+ 3 files changed, 24 insertions(+), 1 deletion(-)
+
+--- a/gst/droidcamsrc/gstdroidcamsrc.c
++++ b/gst/droidcamsrc/gstdroidcamsrc.c
+@@ -209,6 +209,7 @@
+ 
+   src->post_preview = DEFAULT_POST_PREVIEW;
+   src->preview_caps = NULL;
++  src->preview_filter = NULL;
+   src->preview_pipeline =
+       gst_camerabin_create_preview_pipeline (GST_ELEMENT_CAST (src), NULL);
+ 
+@@ -318,6 +319,11 @@
+         gst_value_set_caps (value, src->preview_caps);
+       break;
+ 
++    case PROP_PREVIEW_FILTER:
++      if (src->preview_filter)
++        g_value_set_object (value, src->preview_filter);
++      break;
++
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -454,6 +460,17 @@
+     }
+       break;
+ 
++    case PROP_PREVIEW_FILTER:
++      if (src->preview_filter)
++        gst_object_unref (src->preview_filter);
++      src->preview_filter = g_value_dup_object (value);
++      if (!gst_camerabin_preview_set_filter (src->preview_pipeline,
++              src->preview_filter)) {
++        GST_WARNING_OBJECT (src,
++            "Cannot change preview filter, is element in NULL state?");
++      }
++      break;
++
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -1176,6 +1193,11 @@
+           "The caps of the preview image to be posted (NULL means ANY)",
+           GST_TYPE_CAPS, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+ 
++  g_object_class_install_property (gobject_class, PROP_PREVIEW_FILTER,
++      g_param_spec_object ("preview-filter", "Preview filter",
++          "A custom preview filter to process preview image data",
++          GST_TYPE_ELEMENT, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
++
+   gst_droidcamsrc_photography_add_overrides (gobject_class);
+ 
+   /* Signals */
+--- a/gst/droidcamsrc/gstdroidcamsrc.h
++++ b/gst/droidcamsrc/gstdroidcamsrc.h
+@@ -126,6 +126,7 @@
+   /* camerabin interface */
+   gboolean post_preview;
+   GstCaps *preview_caps;
++  GstElement *preview_filter;
+   GstCameraBinPreviewPipelineData *preview_pipeline;
+ 
+   /* protected with OBJECT_LOCK */
+--- a/gst/droidcamsrc/gstdroidcamsrcphotography.h
++++ b/gst/droidcamsrc/gstdroidcamsrcphotography.h
+@@ -80,7 +80,8 @@
+ 
+   /* camerabin interface */
+   PROP_POST_PREVIEW,
+-  PROP_PREVIEW_CAPS
++  PROP_PREVIEW_CAPS,
++  PROP_PREVIEW_FILTER
+ } GstDroidCamSrcProperties;
+ 
+ void gst_droidcamsrc_photography_register (gpointer g_iface,  gpointer iface_data);

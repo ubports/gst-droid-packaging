@@ -1,0 +1,22 @@
+Description: [droidcamsrc] update preview flag after stop video recording
+ Seems like the preview callback flag is removed when starting video
+ recording and is not restored after recording is stopped. To ensure
+ up-to-date preview buffer next time recording is started, re-update the
+ flag at the stop time.
+Author: Ratchanan Srirattanamet <ratchanan@ubports.com>
+Forwarded: no
+Last-Update: 2020-07-29
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/gst/droidcamsrc/gstdroidcamsrcdev.c
++++ b/gst/droidcamsrc/gstdroidcamsrcdev.c
+@@ -1123,6 +1123,9 @@
+     droid_media_camera_stop_recording (dev->cam);
+   }
+ 
++  /* Update the preview callback flag again; seems to be overwritten. */
++  gst_droidcamsrc_dev_update_preview_callback_flag (dev);
++
+   gst_buffer_pool_set_flushing (dev->pool, FALSE);
+ 
+   GST_INFO ("dev stopped video recording");

@@ -1,8 +1,24 @@
-gst-droid (0.20200605.0-1~ubports16.04.1) UNRELEASED; urgency=medium
+gst-droid (0.20200605.0-1~ubports16.04.1) xenial; urgency=medium
 
   * Merge version 0.20200605.0 from Debian-PM
+  * Speed up camera initialization, by making preview res available earlier
+    - 0106-droidcamsrc-send-flush-stop-when-go-to-playing.patch
+    - 0107-droidcamsrc-dont-re-activate-mode-on-mode-switch-i.patch
+    - 0108-droidcamsrc-dont-fail-device-switch-while-running.patch
+    - 0109-droidcamsrc-make-sensor-orientation-readable-before-READY.patch
+    - 0110-droidcamsrc-notify-sensor-orientation-change-when-device-changed
+      .patch
+    - 0111-droidcamsrc-open-the-camera-at-ready-state.patch
+  * Reduce CPU usage by introducing buffer pool for raw buffers
+    - 0112-droidcamsrc-fix-pool-failure-in-raw-preview-mode.patch
+    - 0113-droidcamsrc-have-buffer-pool-for-raw-buffers.patch
+  * Update preview-image patch to match the PR as they're reviewed
+  * Make sure preview buffer is updated after video recording
+    - 0114-droidcamsrc-update-preview-flag-after-stop-video-r.patch
+  * Prevent crash when swhitching to video mode early
+    - 0115-droidmediabuffer-prevent-crash-from-NULL-mem-copy-.patch
 
- -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Wed, 15 Jul 2020 22:03:40 +0700
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Wed, 29 Jul 2020 20:39:02 +0700
 
 gst-droid (0.20200605.0-1) unstable; urgency=medium
 

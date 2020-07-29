@@ -16,4 +16,5 @@
 0112-droidcamsrc-fix-pool-failure-in-raw-preview-mode.patch
 0113-droidcamsrc-have-buffer-pool-for-raw-buffers.patch
 0114-droidcamsrc-update-preview-flag-after-stop-video-r.patch
+0115-droidmediabuffer-prevent-crash-from-NULL-mem-copy-.patch
 0201-polyfill-g_ptr_array_find-for-glib--2.54.patch

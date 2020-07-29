@@ -1,0 +1,51 @@
+Description: [droidmediabuffer] prevent crash from NULL mem_copy
+ If one switches from image to video in the app early (before first
+ frame appears), for some reason `gst_base_sink_drain` will copy
+ buffer(s) it receives. As we set _NO_SHARE flag, this will lead to
+ `gst_memory_copy`, where it calls `allocator->mem_copy()`
+ unconditionally.
+ .
+ This patch prevent crash by provide a stub function which prints an
+ error and return NULL. Seems to have no bad effect whatsoever and is
+ essentially what upstream does with other non-copyable memory (e.g.
+ GLMemory with external-oes target).
+
+Author: Ratchanan Srirattanamet <ratchanan@ubports.com>
+Forwarded: https://github.com/sailfishos/gst-droid/pull/55
+Last-Update: 2020-07-29
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/gst-libs/gst/droid/gstdroidmediabuffer.c
++++ b/gst-libs/gst/droid/gstdroidmediabuffer.c
+@@ -85,6 +85,8 @@
+ static gpointer gst_droid_media_buffer_memory_map (GstMemory * mem,
+     gsize maxsize, GstMapFlags flags);
+ static void gst_droid_media_buffer_memory_unmap (GstMemory * mem);
++static GstMemory *gst_droid_media_buffer_memory_copy (GstMemory * mem,
++    gssize offset, gssize size);
+ 
+ static EGLImageKHR gst_droid_media_buffer_create_image (GstMemory * mem,
+     EGLDisplay dpy, EGLContext ctx);
+@@ -231,7 +233,7 @@
+ 
+   alloc->mem_map = gst_droid_media_buffer_memory_map;
+   alloc->mem_unmap = gst_droid_media_buffer_memory_unmap;
+-  alloc->mem_copy = NULL;
++  alloc->mem_copy = gst_droid_media_buffer_memory_copy;
+   alloc->mem_share = NULL;
+   alloc->mem_is_span = NULL;
+ 
+@@ -466,6 +468,13 @@
+   }
+ }
+ 
++static GstMemory *
++gst_droid_media_buffer_memory_copy (GstMemory * mem, gssize offset, gssize size)
++{
++  GST_ERROR ("Cannot copy droidmediabuffer memory!");
++  return NULL;
++}
++
+ EGLImageKHR
+ gst_droid_media_buffer_create_image (GstMemory * mem, EGLDisplay dpy,
+     EGLContext ctx)

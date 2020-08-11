@@ -1,7 +1,10 @@
-gst-droid (0.20200605.0-1~ubports16.04.2) UNRELEASED; urgency=medium
+gst-droid (0.20200605.0-1~ubports16.04.2) xenial; urgency=medium
 
+  * Update 0107-droidcamsrc-dont-re-activate-mode-on-mode-switch-i.patch
+    - Update to match reviewed code on the PR. Also update reviewed status.
+  * Jenkinsfile: migrate to shared library approach
 
- -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Wed, 12 Aug 2020 00:42:21 +0700
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Wed, 12 Aug 2020 01:05:26 +0700
 
 gst-droid (0.20200605.0-1~ubports16.04.1) xenial; urgency=medium
 

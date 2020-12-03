@@ -1,3 +1,12 @@
+gst-droid (0.20201104.0-1) unstable; urgency=medium
+
+  * New upstream release.
+    - [gst-droid] Fix regression in droidcamsrc crop rect initialization.
+    - [droidmediabuffer] prevent crash from NULL mem_copy.
+    - [gst-droid] Fix thread leak after recording.
+
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Thu, 03 Dec 2020 21:00:24 +0700
+
 gst-droid (0.20200605.0-1) unstable; urgency=medium
 
   * New upstream release.

@@ -1,8 +1,12 @@
-gst-droid (0.20201104.0-1~ubports16.04.1) UNRELEASED; urgency=medium
+gst-droid (0.20201104.0-1~ubports16.04.1) xenial; urgency=medium
 
-  * 
+  * Update source location for 0.20201104.0
+  * Drop 0115-droidmediabuffer-prevent-crash-from-NULL-mem-copy-.patch.
+    Applied upstream.
+  * Reduce frame available callback verbosity
+  * Remove the shared-library branch from Jenkinsfile
 
- -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Thu, 03 Dec 2020 21:09:16 +0700
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Thu, 03 Dec 2020 22:33:59 +0700
 
 gst-droid (0.20201104.0-1) unstable; urgency=medium
 

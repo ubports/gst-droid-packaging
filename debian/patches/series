@@ -17,3 +17,4 @@
 0113-droidcamsrc-have-buffer-pool-for-raw-buffers.patch
 0114-droidcamsrc-update-preview-flag-after-stop-video-r.patch
 0201-polyfill-g_ptr_array_find-for-glib--2.54.patch
+0202-droidcamsrc-reduce-frame-available-cb-verbosity.patch

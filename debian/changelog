@@ -1,3 +1,9 @@
+gst-droid (0.20201104.0-1~ubports16.04.1build1) xenial; urgency=medium
+
+  * No-change rebuild after fixing CI.
+
+ -- Ratchanan Srirattanamet <ratchanan@ubports.com>  Mon, 07 Dec 2020 16:02:48 +0700
+
 gst-droid (0.20201104.0-1~ubports16.04.1) xenial; urgency=medium
 
   * Update source location for 0.20201104.0
